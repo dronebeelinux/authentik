@@ -10,11 +10,12 @@ import { parseArgs } from "node:util";
 import { $, parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack, pullLatestCorepack } from "./utils/corepack.mjs";
 import { resolveRepoRoot } from "./utils/git.mjs";
-import { createLogger } from "./utils/logging.mjs";
 import { findNPMPackage, loadJSON, npm } from "./utils/node.mjs";
 
+import { ConsoleLogger } from "#logger";
+
 const FALLBACK_NPM_VERSION = "11.10.1";
-const logger = createLogger("setup-corepack");
+const logger = ConsoleLogger.prefix("setup-corepack");
 
 async function main() {
     const parsedArgs = parseArgs({
@@ -35,11 +36,11 @@ async function main() {
 
     const npmVersion = await npm`--version`({ cwd });
 
-    logger.info("npm", npmVersion);
+    logger.info(`npm ${npmVersion}`);
 
     const corepackVersion = await corepack`--version`({ cwd }).catch(() => null);
 
-    logger.info("corepack", corepackVersion || "not found");
+    logger.info(`corepack ${corepackVersion || "not found"}`);
 
     if (corepackVersion && !parsedArgs.values.force) {
         logger.info("Corepack is already installed, skipping download (use --force to override)");
@@ -53,7 +54,7 @@ async function main() {
 
     const { packageJSONPath } = await findNPMPackage(cwd);
 
-    logger.info("Checking versions in", packageJSONPath);
+    logger.info(`Checking versions in ${packageJSONPath}`);
 
     const packageJSONData = await loadJSON(packageJSONPath);
 

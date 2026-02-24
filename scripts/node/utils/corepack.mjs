@@ -3,7 +3,8 @@ import * as fs from "node:fs/promises";
 import { join, relative } from "node:path";
 
 import { $ } from "./commands.mjs";
-import { createLogger } from "./logging.mjs";
+
+import { ConsoleLogger } from "#logger";
 
 const REGISTRY_URL = "https://registry.npmjs.org/corepack";
 const OUTPUT_DIR = join(".corepack", "releases");
@@ -21,7 +22,7 @@ export function readCorepackVersion(cwd = process.cwd()) {
     return $`corepack --version`({ cwd });
 }
 
-const logger = createLogger("setup-corepack");
+const logger = ConsoleLogger.prefix("setup-corepack");
 
 /**
  * @param {string} baseDirectory
@@ -49,7 +50,7 @@ export async function pullLatestCorepack(baseDirectory = process.cwd()) {
     logger.info(`Tarball URL: ${tarballUrl}`);
     logger.info(`Expected integrity: ${expectedIntegrity}`);
 
-    logger.info("Downloading tarball...", { url: tarballUrl });
+    logger.info({ url: tarballUrl }, "Downloading tarball...");
 
     const tarballRes = await fetch(tarballUrl, {
         signal: AbortSignal.timeout(1000 * 60),

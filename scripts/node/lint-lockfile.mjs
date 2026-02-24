@@ -23,8 +23,9 @@ import { isDeepStrictEqual, parseArgs, stripVTControlCharacters } from "node:uti
 import { parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack } from "./utils/corepack.mjs";
 import { gitStatus } from "./utils/git.mjs";
-import { createLogger } from "./utils/logging.mjs";
 import { findNPMPackage, loadJSON, npm } from "./utils/node.mjs";
+
+import { ConsoleLogger } from "#logger";
 
 //#region Utilities
 
@@ -45,7 +46,7 @@ const parsedArgs = parseArgs({
     allowPositionals: true,
 });
 
-const logger = createLogger("lint:lockfile");
+const logger = ConsoleLogger.prefix("lint:lockfile");
 
 const { values: options, positionals } = parsedArgs;
 const cwd = parseCWD(positionals);
@@ -119,7 +120,7 @@ async function run() {
 
     const corepackVersion = await corepack`--version`().catch(() => null);
     const useCorepack = !!corepackVersion;
-    logger.info("corepack", corepackVersion || "disabled");
+    logger.info(`corepack: ${corepackVersion || "disabled"}`);
 
     const expected = {
         lockfile: await loadJSON(packageLockPath),

@@ -9,6 +9,9 @@
         "lint:spellcheck": "echo 'Skipping spellcheck linting'"
     },
     "type": "module",
+    "imports": {
+        "#logger": "./packages/logger-js/lib/node.js"
+    },
     "dependencies": {
         "@eslint/js": "^9.39.3",
         "@goauthentik/eslint-config": "./packages/eslint-config",

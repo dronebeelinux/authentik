@@ -16,10 +16,11 @@ import { parseArgs } from "node:util";
 import { CommandError, parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack } from "./utils/corepack.mjs";
 import { resolveRepoRoot } from "./utils/git.mjs";
-import { createLogger } from "./utils/logging.mjs";
 import { compareVersions, findNPMPackage, loadJSON, node, npm, parseRange } from "./utils/node.mjs";
 
-const logger = createLogger("lint-runtime");
+import { ConsoleLogger } from "#logger";
+
+const logger = ConsoleLogger.prefix("lint-runtime");
 
 /**
  * @param {string} start
@@ -27,7 +28,7 @@ const logger = createLogger("lint-runtime");
 async function readRequirements(start) {
     const { packageJSONPath } = await findNPMPackage(start);
 
-    logger.info("Checking versions in", packageJSONPath);
+    logger.info(`Checking versions in ${packageJSONPath}`);
 
     const packageJSONData = await loadJSON(packageJSONPath);
 
@@ -47,29 +48,29 @@ async function main() {
     const cwd = parseCWD(parsedArgs.positionals);
     const repoRoot = await resolveRepoRoot(cwd).catch(() => null);
 
-    logger.info("cwd", cwd);
-    logger.info("repository", repoRoot || "not found");
+    logger.info(`cwd ${cwd}`);
+    logger.info(`repository ${repoRoot || "not found"}`);
 
     const corepackVersion = await corepack`--version`().catch(() => null);
     const useCorepack = !!corepackVersion;
-    logger.info("corepack", corepackVersion || "disabled");
+    logger.info(`corepack ${corepackVersion || "disabled"}`);
 
     const npmVersion = await npm`--version`({ cwd, useCorepack })
         .then((version) => {
-            logger.info(`npm${corepackVersion ? " (via Corepack)" : ""}`, version);
+            logger.info(`npm${corepackVersion ? " (via Corepack)" : ""} ${version}`);
 
             return version;
         })
         .catch((error) => {
             if (error instanceof CommandError && corepackVersion) {
-                logger.warn(`Failed to read npm version via Corepack`, error.message);
+                logger.warn(`Failed to read npm version via Corepack ${error.message}`);
 
                 logger.info(`Attempting to read npm version directly without Corepack...`);
                 // Corepack might be misconfigured or outdated.
                 // Attempting a second read without Corepack can help us distinguish
                 // between a general npm issue and a Corepack-specific one.
                 return npm`--version`({ cwd }).then((version) => {
-                    logger.info(`npm (direct)`, version);
+                    logger.info(`npm (direct) ${version}`);
 
                     return version;
                 });
@@ -80,10 +81,10 @@ async function main() {
 
     const { nodeVersion, requiredNpmVersion, requiredNodeVersion } = await readRequirements(cwd);
 
-    logger.info("node", nodeVersion);
+    logger.info(`node ${nodeVersion}`);
 
     if (requiredNpmVersion) {
-        logger.info("package.json npm", requiredNpmVersion);
+        logger.info(`package.json npm ${requiredNpmVersion}`);
 
         const { operator, version: required } = parseRange(requiredNpmVersion);
         const result = compareVersions(npmVersion, required);
@@ -95,7 +96,7 @@ async function main() {
     }
 
     if (requiredNodeVersion) {
-        logger.info("package.json node", requiredNodeVersion);
+        logger.info(`package.json node ${requiredNodeVersion}`);
 
         const { operator, version: required } = parseRange(requiredNodeVersion);
         const result = compareVersions(nodeVersion, required);

@@ -8,9 +8,9 @@ import { exec } from "node:child_process";
 import { resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
-import { createLogger } from "./logging.mjs";
+import { ConsoleLogger } from "#logger";
 
-const logger = createLogger("commands");
+const logger = ConsoleLogger.prefix("commands");
 
 export class CommandError extends Error {
     name = "CommandError";
@@ -99,17 +99,17 @@ export function $2(command, options) {
 /**
  * Logs the given error and its cause (if any) and exits the process with a failure code.
  * @param {unknown} error
- * @param {import("./logging.mjs").Logger} logger
+ * @param {typeof ConsoleLogger} logger
  * @returns {never}
  */
-export function reportAndExit(error, logger = console) {
+export function reportAndExit(error, logger = ConsoleLogger) {
     const message = error instanceof Error ? error.message : String(error);
     const cause = error instanceof Error && error.cause instanceof Error ? error.cause : null;
 
     logger.error(`❌ ${message}`);
 
     if (cause) {
-        logger.error("Caused by:", cause);
+        logger.error(`Caused by: ${cause.message}`);
     }
 
     process.exit(1);

@@ -8,6 +8,7 @@ RUN --mount=type=bind,target=/work/package.json,src=./package.json \
     --mount=type=bind,target=/work/package-lock.json,src=./package-lock.json \
     --mount=type=bind,target=/work/website/package.json,src=./website/package.json \
     --mount=type=bind,target=/work/website/package-lock.json,src=./website/package-lock.json \
+    --mount=type=bind,target=/work/packages/logger-js/,src=./packages/logger-js/ \
     --mount=type=bind,target=/work/scripts/node/,src=./scripts/node/ \
     node ./scripts/node/setup-corepack.mjs --force && \
     node ./scripts/node/lint-runtime.mjs ./website
