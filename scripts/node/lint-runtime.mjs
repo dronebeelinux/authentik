@@ -13,12 +13,11 @@
 import * as assert from "node:assert/strict";
 import { parseArgs } from "node:util";
 
+import { ConsoleLogger } from "../../packages/logger-js/lib/node.js";
 import { CommandError, parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack } from "./utils/corepack.mjs";
 import { resolveRepoRoot } from "./utils/git.mjs";
 import { compareVersions, findNPMPackage, loadJSON, node, npm, parseRange } from "./utils/node.mjs";
-
-import { ConsoleLogger } from "#logger";
 
 const logger = ConsoleLogger.prefix("lint-runtime");
 

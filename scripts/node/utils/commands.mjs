@@ -8,7 +8,7 @@ import { exec } from "node:child_process";
 import { resolve, sep } from "node:path";
 import { promisify } from "node:util";
 
-import { ConsoleLogger } from "#logger";
+import { ConsoleLogger } from "../../../packages/logger-js/lib/node.js";
 
 const logger = ConsoleLogger.prefix("commands");
 

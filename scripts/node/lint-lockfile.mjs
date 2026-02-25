@@ -20,12 +20,11 @@ import { findPackageJSON } from "node:module";
 import { dirname } from "node:path";
 import { isDeepStrictEqual, parseArgs, stripVTControlCharacters } from "node:util";
 
+import { ConsoleLogger } from "../../packages/logger-js/lib/node.js";
 import { parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack } from "./utils/corepack.mjs";
 import { gitStatus } from "./utils/git.mjs";
 import { findNPMPackage, loadJSON, npm } from "./utils/node.mjs";
-
-import { ConsoleLogger } from "#logger";
 
 //#region Utilities
 

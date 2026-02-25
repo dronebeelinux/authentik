@@ -2,9 +2,8 @@ import * as crypto from "node:crypto";
 import * as fs from "node:fs/promises";
 import { join, relative } from "node:path";
 
+import { ConsoleLogger } from "../../../packages/logger-js/lib/node.js";
 import { $ } from "./commands.mjs";
-
-import { ConsoleLogger } from "#logger";
 
 const REGISTRY_URL = "https://registry.npmjs.org/corepack";
 const OUTPUT_DIR = join(".corepack", "releases");

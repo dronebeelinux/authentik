@@ -7,12 +7,11 @@
 import * as fs from "node:fs/promises";
 import { parseArgs } from "node:util";
 
+import { ConsoleLogger } from "../../packages/logger-js/lib/node.js";
 import { $, parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack, pullLatestCorepack } from "./utils/corepack.mjs";
 import { resolveRepoRoot } from "./utils/git.mjs";
 import { findNPMPackage, loadJSON, npm } from "./utils/node.mjs";
-
-import { ConsoleLogger } from "#logger";
 
 const FALLBACK_NPM_VERSION = "11.10.1";
 const logger = ConsoleLogger.prefix("setup-corepack");
