@@ -78,4 +78,4 @@ runs:
         echo "npm version: $(corepack npm --version)"
 
         node ./scripts/node/lint-lockfile.mjs ${{ inputs.working-directory }}
-        corepack npm install --prefix ${{ inputs.working-directory }}
+        corepack npm ci --prefix ${{ inputs.working-directory }}
