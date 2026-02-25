@@ -87,8 +87,13 @@ jobs:
       - name: checkout stable
         run: | # shell
           set -e -o pipefail
+
           cp -R .github ..
           cp -R scripts ..
+
+          mkdir -p ../packages
+          cp -R packages/logger-js ../packages/logger-js
+
           # Previous stable tag
           prev_stable=$(git tag --sort=version:refname | grep '^version/' | grep -vE -- '-rc[0-9]+$' | tail -n1)
           # Current version family based on
@@ -96,10 +101,13 @@ jobs:
           if [[ -n $current_version_family ]]; then
               prev_stable="version/${current_version_family}"
           fi
+
           echo "::notice::Checking out ${prev_stable} as stable version..."
           git checkout ${prev_stable}
-          rm -rf .github/ scripts/
+
+          rm -rf .github/ scripts/ packages/logger-js/
           mv ../.github ../scripts .
+          mv ../packages/logger-js ./packages/
       - name: Setup authentik env (stable)
         uses: ./.github/actions/setup
         with:
