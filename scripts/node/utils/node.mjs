@@ -48,6 +48,7 @@ export async function findNPMPackage(start) {
  * @property {Record<string, string>} [devDependencies]
  * @property {Record<string, string>} [peerDependencies]
  * @property {Record<string, string>} [optionalDependencies]
+ * @property {Record<string, string>} [peerDependenciesMeta]
  * @property {Record<string, string>} [engines]
  * @property {Record<string, string>} [devEngines]
  * @property {string} [packageManager]
@@ -64,6 +65,40 @@ export function loadJSON(jsonPath) {
         .catch((cause) => {
             throw new Error(`Failed to load JSON file at ${jsonPath}`, { cause });
         });
+}
+
+const PackageJSONComparisionFields = /** @type {const} */ ([
+    "name",
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies",
+    "peerDependencies",
+    "peerDependenciesMeta",
+]);
+
+/**
+ * @typedef {typeof PackageJSONComparisionFields[number]} PackageJSONComparisionField
+ */
+
+/**
+ * Extracts only the dependency fields from a package.json object for comparison purposes.
+ *
+ * @param {PackageJSON} data
+ * @returns {Pick<PackageJSON, PackageJSONComparisionField>}
+ */
+export function pluckDependencyFields(data) {
+    /**
+     * @type {Record<string, unknown>}
+     */
+    const result = {};
+
+    for (const field of PackageJSONComparisionFields) {
+        if (data[field]) {
+            result[field] = data[field];
+        }
+    }
+
+    return /** @type {Pick<PackageJSON, PackageJSONComparisionField>} */ (result);
 }
 
 //#region Versioning

@@ -15,20 +15,24 @@
  *   2  Lockfile drift detected
  */
 
+/// <reference lib="esnext" />
+
 import * as assert from "node:assert/strict";
 import { findPackageJSON } from "node:module";
 import { dirname } from "node:path";
-import { isDeepStrictEqual, parseArgs, stripVTControlCharacters } from "node:util";
+import { isDeepStrictEqual, parseArgs } from "node:util";
 
 import { ConsoleLogger } from "../../packages/logger-js/lib/node.js";
 import { parseCWD, reportAndExit } from "./utils/commands.mjs";
 import { corepack } from "./utils/corepack.mjs";
 import { gitStatus } from "./utils/git.mjs";
-import { findNPMPackage, loadJSON, npm } from "./utils/node.mjs";
+import { findNPMPackage, loadJSON, npm, pluckDependencyFields } from "./utils/node.mjs";
 
-//#region Utilities
+//#region Constants
 
-const parsedArgs = parseArgs({
+const logger = ConsoleLogger.prefix("lint:lockfile");
+
+const { values: options, positionals } = parseArgs({
     options: {
         "warn": {
             type: "boolean",
@@ -45,10 +49,54 @@ const parsedArgs = parseArgs({
     allowPositionals: true,
 });
 
-const logger = ConsoleLogger.prefix("lint:lockfile");
-
-const { values: options, positionals } = parsedArgs;
 const cwd = parseCWD(positionals);
+
+const ignoredProperties = new Set([
+    // ---
+    "peer",
+    "engines",
+    "optional",
+]);
+
+//#region Utilities
+
+/**
+ * @param {Record<string, unknown>} actual
+ * @param {Record<string, unknown>} expected
+ * @param {string[]} [prefix]
+ * @returns {Set<string>[]}
+ */
+function extractDiffedProperties(actual, expected, prefix = []) {
+    const a = actual ?? {};
+    const b = expected ?? {};
+    const keys = new Set([...Object.keys(a), ...Object.keys(b)]);
+    /** @type {Set<string>[]} */
+    const diffs = [];
+
+    for (const key of keys) {
+        const path = [...prefix, key];
+        const valA = a[key];
+        const valB = b[key];
+
+        if (
+            valA !== null &&
+            valB !== null &&
+            typeof valA === "object" &&
+            typeof valB === "object" &&
+            !Array.isArray(valA) &&
+            !Array.isArray(valB)
+        ) {
+            // @ts-ignore
+            diffs.push(...extractDiffedProperties(valA, valB, path));
+        } else if (!isDeepStrictEqual(valA, valB)) {
+            diffs.push(new Set(path));
+        }
+    }
+
+    return diffs;
+}
+
+//#endregion
 
 /**
  * Exit code when lockfile drift is detected (distinct from general errors)
@@ -123,7 +171,7 @@ async function run() {
 
     const expected = {
         lockfile: await loadJSON(packageLockPath),
-        package: await loadJSON(packageJSONPath),
+        package: await loadJSON(packageJSONPath).then(pluckDependencyFields),
     };
 
     logger.info(`package.json: ${packageJSONPath} (${expected.package.name})`);
@@ -164,7 +212,7 @@ async function run() {
 
     const actual = {
         lockfile: await loadJSON(packageLockPath),
-        package: await loadJSON(packageJSONPath),
+        package: await loadJSON(packageJSONPath).then(pluckDependencyFields),
     };
 
     // MARK: Compare
@@ -188,19 +236,20 @@ async function run() {
 
         // NPM versions <=11.10 has issues with deterministic lockfile generation,
         // especially around optional peer dependencies.
-        const lines = stripVTControlCharacters(error.message)
-            .split("\n")
-            .map((line) => line.trim())
-            .filter((line) => line.startsWith("-") || line.startsWith("+"))
-            .filter((line) => !line.startsWith("+ actual - expected"))
-            .filter((line) => !line.includes("peer:"));
+        const diffedProperties = extractDiffedProperties(actual.lockfile, expected.lockfile).filter(
+            (segments) => segments.isDisjointFrom(ignoredProperties),
+        );
 
-        if (lines.length) {
-            throw new Error(`Lockfile drift detected:\n${lines.join("\n")}`, { cause: error });
+        if (diffedProperties.length) {
+            const formatted = diffedProperties
+                .map((segments) => Array.from(segments).join("."))
+                .join("\n");
+
+            throw new Error(`Lockfile drift detected:\n${formatted}`, { cause: error });
         }
 
         logger.warn(
-            "Optional peer dependency differences detected. Run `npm install` to update the lockfile.",
+            "Permissible dependency differences detected. Run `npm install` to update the lockfile.",
         );
     }
 
